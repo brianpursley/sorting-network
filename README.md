@@ -40,3 +40,4 @@ You can pipe the output to rsvg-convert to generate a PNG (or other format) inst
 ```
 ./sortingnetwork.py --input examples/4-input.cn --svg | rsvg-convert > examples/4-input.png
 ```
+![4-Input Sorting Network](https://github.com/brianpursley/sorting-network/blob/master/examples/4-input.png)
