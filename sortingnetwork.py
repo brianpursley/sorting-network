@@ -93,7 +93,7 @@ class ComparisonNetwork:
 		
 		w = x + xscale
 		n = self.getMaxInput() + 1
-		h = (n + 2) * yscale
+		h = (n + 1) * yscale
 		result = "<?xml version='1.0' encoding='utf-8'?>"
 		result += "<!DOCTYPE svg>"
 		result += "<svg width='%spx' height='%spx' xmlns='http://www.w3.org/2000/svg'>"%(w, h)
@@ -107,33 +107,21 @@ class ComparisonNetwork:
 	@staticmethod
 	def parse(s):
 		result = ComparisonNetwork()
-		result.comparators = map(Comparator.parse, s.split(","))
+		result.comparators = map(Comparator.parse, filter(lambda x: x != '', s.replace("\n",",").split(",")))
 		return result
 	
 class SortingNetworkChecker:
 	def __init__(self, numberOfInputs):
 		self.numberOfInputs = numberOfInputs
 		self.sortedSequences = []
-		max = 2**numberOfInputs
-		for i in range(0, max):
-			if self._isSortedSequence(i):
-				self.sortedSequences.append(i)	
-				
-	def _isSortedSequence(self, i):
-		last = 1
-		original = i
-		while i:
-			if i & 1:
-				if last == 0:
-					return False
-			elif not i & 1:				
-				last = 0
-			i >>= 1
-		return True
-		
+		self.maxSequenceToCheck = 2**numberOfInputs
+		for i in range(0, numberOfInputs + 1):
+			bits = "0" * i + "1" * (numberOfInputs - i)
+			self.sortedSequences.append(int(bits, 2))
+			
 	def isSortingNetwork(self, cn):
-		max = 2**self.numberOfInputs
-		for i in range(0, max):
+		for i in range(1, self.maxSequenceToCheck):
+			sequence = cn.sort(i)
 			if cn.sort(i) not in self.sortedSequences:
 				return False 
 		return True
@@ -167,6 +155,6 @@ def main():
 			svg = open(args.svg, "w")
 			svg.write(cn.svg())
 			svg.close()
-		
+
 if __name__ == "__main__":
     main()
