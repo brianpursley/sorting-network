@@ -4,16 +4,24 @@ Python script to check sorting networks and generate sorting network diagrams
 ## Usage
 
 ```
-usage: sortingnetwork.py [-h] [-i inputfile] [-c] [-s [outputfile]]  
+usage: sortingnetwork.py [-h] [-i inputfile] [-o [outputfile]] [-s [outputfile]] [-c] 
 
 optional arguments:  
     -h, --help                              show this help message and exit  
     -i inputfile, --input inputfile         specify a file containing comparison network definition  
-    -c, --check                             check whether it is a sorting network  
+    -o [outputfile], --output [outputfile]  specify a file for saving the comparison network definition
     -s [outputfile], --svg [outputfile]     generate SVG  
+    -c, --check                             check whether it is a sorting network  
 ```
 
-Comparison networks can be specified like this: `0:2,1:3,0:1,2:3,1:2` and can either be loaded from a file using the `--input` argument or if no input file is specified, read from stdin.
+Comparison networks can be specified like this: `[[0,1],[2,3],[0,2],[1,3],[1,2]]` and can either be loaded from a file using the `--input` argument or if no input file is specified, read from stdin.
+
+Multiple lines can be used as well, to logically group the comparators at each depth. `[[0,1],[2,3],[0,2],[1,3],[1,2]]` is the same as this:
+```
+[[0,1],[2,3]]
+[[0,2],[1,3]]
+[[1,2]]
+```
 
 ## Examples
 Read a comparison network from a file called example.cn and check whether it is is a sorting network.
@@ -23,7 +31,7 @@ Read a comparison network from a file called example.cn and check whether it is 
 
 Pipe a comparison network from stdin and check whether it is is a sorting network.
 ```
-echo "0:2,1:3,0:1,2:3,1:2" | ./sortingnetwork.py --check
+echo "[[0,1],[2,3],[0,2],[1,3],[1,2]]" | ./sortingnetwork.py --check
 ```
 
 Read a comparison network from a file called example.cn and generate SVG to stdout.
@@ -41,3 +49,8 @@ Pipe the output to rsvg-convert to generate a PNG (or other format) instead of S
 ./sortingnetwork.py --input examples/4-input.cn --svg | rsvg-convert > examples/4-input.png
 ```
 ![4-Input Sorting Network](https://github.com/brianpursley/sorting-network/blob/master/examples/4-input.png)
+
+```
+./sortingnetwork.py --input examples/5-input.cn --svg | rsvg-convert > examples/5-input.png
+```
+![5-Input Sorting Network](https://github.com/brianpursley/sorting-network/blob/master/examples/5-input.png)
