@@ -24,72 +24,64 @@
 
 import sys, argparse
 
-class Comparator:
-	def __init__(self, input1, input2):		
-		self.inputs = []
-		self.inputs.append(input1)
-		self.inputs.append(input2)
-		
-	def __str__(self):
-		return ":".join(map(str, self.inputs))	
-		
-	@staticmethod
-	def parse(s):
-		inputs = map(int, s.split(":"))
-		return Comparator(inputs[0], inputs[1])
+class ComparisonNetwork(list):
 
-class ComparisonNetwork:
-	def __init__(self):
-		self.comparators = []	
-		
 	def __str__(self):
-		return ",".join(map(str, self.comparators))
+		result = ""
+		usedInputs = []
+		current = []
+		for c in self:
+			if c[0] in usedInputs or c[1] in usedInputs:
+				result += str(current).replace(" ", "") + "\n"
+				del usedInputs[:]
+				del current[:]
+			current.append(c)
+			usedInputs.append(c[0])
+			usedInputs.append(c[1])
+		result += str(current).replace(" ", "")
+		return result
 		
-	def append(self, input1, input2):
-		self.comparators.append(Comparator(input1, input2))
-		
-	def sort(self, sequence):
+	def sortSequence(self, sequence):
 		result = sequence
-		for c in self.comparators:
-			a = c.inputs[0]
-			b = c.inputs[1]
+		for c in self:
+			a = c[0]
+			b = c[1]
 			if (result >> a) & 1 < (result >> b) & 1:
 				result = (result - 2**b) | 2**a
 		return result
 		
 	def getMaxInput(self):
 		max = 0
-		for c in self.comparators:
-			if c.inputs[0] > max:
-				max= c.inputs[0]
-			if c.inputs[1] > max:
-				max = c.inputs[1]
+		for c in self:
+			if c[0] > max:
+				max= c[0]
+			if c[1] > max:
+				max = c[1]
 		return max
 		
 	def svg(self):
 		scale = 1
-		xscale = scale * 30
+		xscale = scale * 35
 		yscale = scale * 20
 		
 		innerResult = ''
 		x = xscale
 		usedInputs = []
-		for c in self.comparators:
-			a = c.inputs[0]
-			b = c.inputs[1]
-			if a in usedInputs or b in usedInputs:
+		for c in self:
+			if c[0] in usedInputs or c[1] in usedInputs:
 				x += xscale
 				del usedInputs[:]
 			for ui in usedInputs:
-				if (ui > a and ui < b) or (ui > b and ui < a):
-					x += xscale / 2
-			y0 = yscale + a * yscale
-			y1 = yscale + b * yscale
+				if (ui > c[0] and ui < c[1]) or (ui > c[1] and ui < c[0]):
+					x += xscale / 3
+					break
+			y0 = yscale + c[0] * yscale
+			y1 = yscale + c[1] * yscale
 			innerResult += "<circle cx='%s' cy='%s' r='%s' style='stroke:black;stroke-width:1;fill=yellow' />"%(x, y0, 3)
 			innerResult += "<line x1='%s' y1='%s' x2='%s' y2='%s' style='stroke:black;stroke-width:%s' />"%(x, y0, x, y1, 1)
 			innerResult += "<circle cx='%s' cy='%s' r='%s' style='stroke:black;stroke-width:1;fill=yellow' />"%(x, y1, 3)
-			usedInputs.append(a)
-			usedInputs.append(b)
+			usedInputs.append(c[0])
+			usedInputs.append(c[1])
 		
 		w = x + xscale
 		n = self.getMaxInput() + 1
@@ -104,12 +96,6 @@ class ComparisonNetwork:
 		result += "</svg>"
 		return result
 		
-	@staticmethod
-	def parse(s):
-		result = ComparisonNetwork()
-		result.comparators = map(Comparator.parse, filter(lambda x: x != '', s.replace("\n",",").split(",")))
-		return result
-	
 class SortingNetworkChecker:
 	def __init__(self, numberOfInputs):
 		self.numberOfInputs = numberOfInputs
@@ -121,40 +107,49 @@ class SortingNetworkChecker:
 			
 	def isSortingNetwork(self, cn):
 		for i in range(1, self.maxSequenceToCheck):
-			sequence = cn.sort(i)
-			if cn.sort(i) not in self.sortedSequences:
+			if cn.sortSequence(i) not in self.sortedSequences:
 				return False 
 		return True
 		
 def readComparisonNetwork(filename):
+	cn = ComparisonNetwork()
 	if filename:
-		f = open(filename, 'r')
-		cn = ComparisonNetwork.parse(f.read())
-		f.close()
+		with open(filename, 'r') as f:
+			for line in f:
+				cn += eval(line)
 	else:
-		cn = ComparisonNetwork.parse(sys.stdin.read())
+		for line in sys.stdin:
+			cn += eval(line)
 	return cn
 	
 def main():
 	parser = argparse.ArgumentParser()
 	parser.add_argument("-i", "--input", metavar="inputfile", help="specify a file containing comparison network definition")
-	parser.add_argument("-c", "--check", action="store_true", help="check whether it is a sorting network")
+	parser.add_argument("-o", "--output", metavar="outputfile", nargs='?', const='', help="specify a file for saving the comparison network definition")
 	parser.add_argument("-s", "--svg", metavar="outputfile", nargs='?', const='', help="generate SVG")
+	parser.add_argument("-c", "--check", action="store_true", help="check whether it is a sorting network")
 	args = parser.parse_args()
-	
+
 	if args.check:
 		cn = readComparisonNetwork(args.input)
 		checker = SortingNetworkChecker(cn.getMaxInput() + 1)
 		print checker.isSortingNetwork(cn)
-	
+
 	if args.svg or args.svg == "":
 		cn = readComparisonNetwork(args.input)
 		if args.svg == "":
 			print cn.svg()
 		else:
-			svg = open(args.svg, "w")
-			svg.write(cn.svg())
-			svg.close()
+			with open(args.svg, "w") as f:
+				f.write(cn.svg())
+
+	if args.output or args.output == "":
+		cn = readComparisonNetwork(args.input)
+		if args.output == "":
+			print str(cn)
+		else:
+			with open(args.output, "w") as f:
+				f.write(str(cn))
 
 if __name__ == "__main__":
     main()
