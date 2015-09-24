@@ -36,7 +36,8 @@ Read a comparison network from a file called example.cn and generate SVG, saved 
 ./sortingnetwork.py --input example.cn --svg output.svg
 ```
 
-You can pipe the output to rsvg-convert to generate a PNG (or other format) instead of SVG.  *rsvg-convert can be installed by using `sudo apt-get install librsvg2-bin` on Ubuntu.*
+Pipe the output to rsvg-convert to generate a PNG (or other format) instead of SVG.  (*rsvg-convert can be installed by using `sudo apt-get install librsvg2-bin` on Ubuntu.*)
 ```
 ./sortingnetwork.py --input examples/4-input.cn --svg | rsvg-convert > examples/4-input.png
 ```
+![4-Input Sorting Network](https://github.com/brianpursley/sorting-network/blob/master/examples/4-input.png)
