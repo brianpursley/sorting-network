@@ -49,7 +49,7 @@ class ComparisonNetwork(list):
 		return result
 		
 	def sortSequence(self, sequence):
-		result = sequence
+		result = list(sequence)
 		for c in self:
 			if result[c[0]] > result[c[1]]:
 				result[c[0]], result[c[1]] = result[c[1]], result[c[0]]
