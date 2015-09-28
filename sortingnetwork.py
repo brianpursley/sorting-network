@@ -41,13 +41,18 @@ class ComparisonNetwork(list):
 		result += str(current).replace(" ", "")
 		return result
 		
+	def sortBinarySequence(self, sequence):
+		result = sequence
+		for c in self:
+			if (result >> c[0]) & 1 < (result >> c[1]) & 1:
+				result = (result - 2**c[1]) | 2**c[0]
+		return result
+		
 	def sortSequence(self, sequence):
 		result = sequence
 		for c in self:
-			a = c[0]
-			b = c[1]
-			if (result >> a) & 1 < (result >> b) & 1:
-				result = (result - 2**b) | 2**a
+			if result[c[0]] > result[c[1]]:
+				result[c[0]], result[c[1]] = result[c[1]], result[c[0]]
 		return result
 		
 	def getMaxInput(self):
@@ -99,15 +104,15 @@ class ComparisonNetwork(list):
 class SortingNetworkChecker:
 	def __init__(self, numberOfInputs):
 		self.numberOfInputs = numberOfInputs
-		self.sortedSequences = []
+		self.sortedBinarySequences = []
 		self.maxSequenceToCheck = 2**numberOfInputs
 		for i in range(0, numberOfInputs + 1):
 			bits = "0" * i + "1" * (numberOfInputs - i)
-			self.sortedSequences.append(int(bits, 2))
+			self.sortedBinarySequences.append(int(bits, 2))
 			
 	def isSortingNetwork(self, cn):
 		for i in range(1, self.maxSequenceToCheck):
-			if cn.sortSequence(i) not in self.sortedSequences:
+			if cn.sortBinarySequence(i) not in self.sortedBinarySequences:
 				return False 
 		return True
 		
@@ -121,13 +126,14 @@ def readComparisonNetwork(filename):
 		for line in sys.stdin:
 			cn += eval(line)
 	return cn
-	
+		
 def main():
 	parser = argparse.ArgumentParser()
 	parser.add_argument("-i", "--input", metavar="inputfile", help="specify a file containing comparison network definition")
 	parser.add_argument("-o", "--output", metavar="outputfile", nargs='?', const='', help="specify a file for saving the comparison network definition")
-	parser.add_argument("-s", "--svg", metavar="outputfile", nargs='?', const='', help="generate SVG")
 	parser.add_argument("-c", "--check", action="store_true", help="check whether it is a sorting network")
+	parser.add_argument("-s", "--sort", metavar="list", nargs='?', const='', help="sorts the list using the input comparison network")
+	parser.add_argument("--svg", metavar="outputfile", nargs='?', const='', help="generate SVG")
 	args = parser.parse_args()
 
 	if args.check:
@@ -151,5 +157,13 @@ def main():
 			with open(args.output, "w") as f:
 				f.write(str(cn))
 
+	if args.sort or args.sort == "":
+		cn = readComparisonNetwork(args.input)
+		if args.sort == "":
+			inputSequence = eval(sys.stdin.readline())
+		else:
+			inputSequence = eval(args.sort)
+		print cn.sortSequence(inputSequence)
+		
 if __name__ == "__main__":
     main()
