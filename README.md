@@ -11,6 +11,8 @@ optional arguments:
   -i inputfile, --input inputfile           specify a file containing comparison network definition
   -o [outputfile], --output [outputfile]    specify a file for saving the comparison network definition
   -c, --check                               check whether it is a sorting network
+  --show-progress                           show percent complete while checking whether it is a
+                                            sorting network
   -s [list], --sort [list]                  sorts the list using the input comparison network
   --svg [outputfile]                        generate SVG
 

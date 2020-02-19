@@ -71,7 +71,7 @@ class ComparisonNetwork(list):
 		result += ','.join(map(str, group))
 		return result
 
-	def is_sorting_network(self):
+	def is_sorting_network(self, show_progress):
 		# Use the zero-one principle to determine if this comparison network is a sorting network
 		number_of_inputs = self.get_max_input() + 1
 		max_sequence_to_check = (1 << number_of_inputs) - 1
@@ -84,6 +84,10 @@ class ComparisonNetwork(list):
 				expected_sorted_sequence = 0
 			if self.sort_binary_sequence(i) != expected_sorted_sequence:
 				return False
+			if show_progress and i % 100 == 0:
+				print("\rChecking... %s%%" % round(i * 100 / max_sequence_to_check), end="")
+		if show_progress:
+			print("\r", end="")
 		return True
 
 	def sort_binary_sequence(self, sequence):
@@ -195,6 +199,7 @@ def main():
 	parser.add_argument("-o", "--output", metavar="outputfile", nargs='?', const='',
 						help="specify a file for saving the comparison network definition")
 	parser.add_argument("-c", "--check", action="store_true", help="check whether it is a sorting network")
+	parser.add_argument("--show-progress", action="store_true", help="show percent complete while checking whether it is a sorting network")
 	parser.add_argument("-s", "--sort", metavar="list", nargs='?', const='',
 						help="sorts the list using the input comparison network")
 	parser.add_argument("--svg", metavar="outputfile", nargs='?', const='', help="generate SVG")
@@ -202,7 +207,7 @@ def main():
 
 	if args.check:
 		cn = read_comparison_network(args.input)
-		if cn.is_sorting_network():
+		if cn.is_sorting_network(args.show_progress):
 			print("It is a sorting network!")
 		else:
 			print("It is not a sorting network.")
