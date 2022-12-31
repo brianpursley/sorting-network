@@ -165,6 +165,7 @@ class ComparisonNetwork(list):
 			"<?xml version='1.0' encoding='utf-8'?>" + \
 			"<!DOCTYPE svg>" + \
 			"<svg width='%spx' height='%spx' xmlns='http://www.w3.org/2000/svg'>" % (w, h) + \
+			"<rect width='100%%' height='100%%' fill='white' />" + \
 			comparators_svg + \
 			lines_svg + \
 			"</svg>"
