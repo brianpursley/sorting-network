@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 import unittest
+
 from sortingnetwork import read_comparison_network, read_comparison_network_from_string
 
 
