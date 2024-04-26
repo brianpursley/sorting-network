@@ -61,7 +61,7 @@ class ComparisonNetwork(list):
 	def __str__(self):
 		result = ""
 		group = []
-		for c in self:
+		for c in self.optimize():
 			for other in group:
 				if c.has_same_input(other):
 					result += ','.join(map(str, group)) + "\n"
@@ -115,6 +115,35 @@ class ComparisonNetwork(list):
 				max_input = c.i2
 		return max_input
 
+	def optimize(self):
+		optimized = ComparisonNetwork()
+
+		# Make a copy of the comparison network, so we can keep track of which comparators are remaining
+		remaining = self.copy()
+
+		# Create a list to keep track of the comparators that have been considered at the current depth
+		current = list()
+
+		while len(remaining) > 0:
+			# Add all remaining comparators that do not have the same input as any other comparator in the current depth
+			any_added = False
+			for c in remaining.copy():
+				can_add_this_comparator = True
+				for d in current:
+					if c.has_same_input(d):
+						can_add_this_comparator = False
+						break
+				if can_add_this_comparator:
+					optimized.append(c)
+					remaining.remove(c)
+					any_added = True
+				current.append(c)
+			# If no comparators were added to the current depth, then start a new depth (clear the current list)
+			if not any_added:
+				current.clear()
+
+		return optimized
+
 	def svg(self):
 		scale = 1
 		x_scale = scale * 35
@@ -123,7 +152,7 @@ class ComparisonNetwork(list):
 		comparators_svg = ""
 		w = x_scale
 		group = {}
-		for c in self:
+		for c in self.optimize():
 
 			# If the comparator inputs are the same position as any other comparator in the group, then start a new group
 			for other in group:
@@ -190,6 +219,13 @@ def read_comparison_network(filename):
 		for line in sys.stdin:
 			for c in line.split(","):
 				cn.append(Comparator(c))
+	return cn
+
+
+def read_comparison_network_from_string(s):
+	cn = ComparisonNetwork()
+	for c in s.split(","):
+		cn.append(Comparator(c))
 	return cn
 
 
