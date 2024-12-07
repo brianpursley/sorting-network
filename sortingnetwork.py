@@ -174,9 +174,9 @@ class ComparisonNetwork(list):
             y0 = y_scale + c.i1 * y_scale
             y1 = y_scale + c.i2 * y_scale
             comparators_svg += \
-                "<circle cx='%s' cy='%s' r='%s' style='stroke:black;stroke-width:1;fill=yellow' />" % (cx, y0, 3) + \
-                "<line x1='%s' y1='%s' x2='%s' y2='%s' style='stroke:black;stroke-width:%s' />" % (cx, y0, cx, y1, 1) + \
-                "<circle cx='%s' cy='%s' r='%s' style='stroke:black;stroke-width:1;fill=yellow' />" % (cx, y1, 3)
+                "<circle cx='%s' cy='%s' r='%s' style='stroke:black;stroke-width:1;' />" % (cx, y0, 3) + \
+                "<line x1='%s' y1='%s' x2='%s' y2='%s' style='stroke:black;stroke-width:%s;' />" % (cx, y0, cx, y1, 1) + \
+                "<circle cx='%s' cy='%s' r='%s' style='stroke:black;stroke-width:1;' />" % (cx, y1, 3)
             # Add this comparator to the current group
             group[c] = cx
 
@@ -186,7 +186,7 @@ class ComparisonNetwork(list):
         n = self.get_max_input() + 1
         for i in range(0, n):
             y = y_scale + i * y_scale
-            lines_svg += "<line x1='%s' y1='%s' x2='%s' y2='%s' style='stroke:black;stroke-width:%s' />" % (
+            lines_svg += "<line x1='%s' y1='%s' x2='%s' y2='%s' style='stroke:black;stroke-width:%s;' />" % (
                 0, y, w, y, 1)
 
         h = (n + 1) * y_scale
