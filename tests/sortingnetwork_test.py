@@ -22,21 +22,114 @@
 
 import unittest
 
-from sortingnetwork import read_comparison_network, read_comparison_network_from_string
+from sortingnetwork import Comparator, ComparisonNetwork
 
 
-class Testing(unittest.TestCase):
+class ComparatorTests(unittest.TestCase):
+    def test_comparator(self):
+        test_cases = [
+            (0, 1, 0, 1, "0:1"),
+            (1, 0, 0, 1, "0:1"),
+            (0, 2, 0, 2, "0:2"),
+            (2, 0, 0, 2, "0:2"),
+            (1, 2, 1, 2, "1:2"),
+            (2, 1, 1, 2, "1:2"),
+        ]
+        for i1, i2, expected_i1, expected_i2, expected_str in test_cases:
+            with self.subTest(i1=i1, i2=i2):
+                c = Comparator(i1, i2)
+                self.assertEqual(c.i1, expected_i1)
+                self.assertEqual(c.i2, expected_i2)
+                self.assertEqual(c.__str__(), expected_str)
+                self.assertEqual(c.__repr__(), expected_str)
+
+    def test_comparator_eq(self):
+        test_cases = [
+            (Comparator(0, 1), Comparator(0, 1), True),
+            (Comparator(0, 1), Comparator(1, 0), True),
+            (Comparator(0, 1), Comparator(0, 2), False),
+            (Comparator(0, 1), Comparator(1, 2), False),
+            (Comparator(0, 1), Comparator(2, 3), False),
+        ]
+        for c1, c2, expected in test_cases:
+            with self.subTest(c1=c1, c2=c2):
+                self.assertEqual(c1 == c2, expected)
+
+    def test_comparator_overlaps(self):
+        test_cases = [
+            (Comparator(0, 1), Comparator(2, 3), False),
+            (Comparator(2, 3), Comparator(0, 1), False),
+            (Comparator(0, 2), Comparator(1, 3), True),
+            (Comparator(0, 3), Comparator(1, 2), True),
+            (Comparator(1, 3), Comparator(0, 2), True)
+        ]
+        for c1, c2, expected in test_cases:
+            with self.subTest(c1=c1, c2=c2):
+                self.assertEqual(c1.overlaps(c2), expected)
+
+    def test_comparator_has_same_input(self):
+        test_cases = [
+            (Comparator(0, 1), Comparator(0, 1), True),
+            (Comparator(0, 1), Comparator(1, 2), True),
+            (Comparator(0, 1), Comparator(0, 2), True),
+            (Comparator(0, 1), Comparator(2, 3), False),
+            (Comparator(0, 3), Comparator(1, 2), False),
+            (Comparator(2, 3), Comparator(0, 1), False),
+        ]
+        for c1, c2, expected in test_cases:
+            with self.subTest(c1=c1, c2=c2):
+                self.assertEqual(c1.has_same_input(c2), expected)
+
+
+class ComparisonNetworkTests(unittest.TestCase):
+    def test_comparison_network(self):
+        cn = ComparisonNetwork()
+        self.assertEqual(cn.comparators, [])
+        with self.assertRaises(ValueError):
+            cn.get_max_input()
+        self.assertFalse(cn.is_sorting_network())
+        self.assertEqual(cn.__str__(), "")
+        self.assertEqual(cn.__repr__(), "")
+
+    def test_comparison_network_append_and_remove(self):
+        cn = ComparisonNetwork()
+        c = Comparator(0, 1)
+        cn.append(c)
+        self.assertEqual(cn.comparators, [c])
+        self.assertEqual(cn.get_max_input(), 1)
+        self.assertTrue(cn.is_sorting_network())
+        self.assertEqual(cn.__str__(), "0:1")
+        self.assertEqual(cn.__repr__(), "0:1")
+
+        cn.remove(c)
+        self.assertEqual(cn.comparators, [])
+
+        with self.assertRaises(ValueError):
+            cn.remove(c)
+
+    def test_empty_comparison_network_svg_should_fail(self):
+        with self.assertRaises(ValueError):
+            ComparisonNetwork().svg()
+
     def test_example_svg(self):
         self.maxDiff = None
         test_cases = [
+            ("../examples/3-input.cn", "../examples/3-input.svg"),
             ("../examples/4-input.cn", "../examples/4-input.svg"),
             ("../examples/5-input.cn", "../examples/5-input.svg"),
+            ("../examples/6-input.cn", "../examples/6-input.svg"),
+            ("../examples/7-input.cn", "../examples/7-input.svg"),
+            ("../examples/8-input.cn", "../examples/8-input.svg"),
             ("../examples/8-input-bitonic.cn", "../examples/8-input-bitonic.svg"),
+            ("../examples/9-input.cn", "../examples/9-input.svg"),
+            ("../examples/10-input.cn", "../examples/10-input.svg"),
+            ("../examples/11-input.cn", "../examples/11-input.svg"),
+            ("../examples/12-input.cn", "../examples/12-input.svg"),
             ("../examples/16-input.cn", "../examples/16-input.svg"),
         ]
         for input_filename, svg_filename in test_cases:
             with self.subTest(inputFilename=input_filename, svgFilename=svg_filename):
-                cn = read_comparison_network(input_filename)
+                cn = ComparisonNetwork.from_file(input_filename)
                 with open(svg_filename, "r") as f:
                     expected_svg = f.read().strip()
                 self.assertEqual(cn.svg(), expected_svg)
@@ -44,28 +137,38 @@ class Testing(unittest.TestCase):
     # https://github.com/brianpursley/sorting-network/issues/2
     def test_optimize_should_order_comparators_to_avoid_unnecessary_gaps(self):
         self.maxDiff = None
-        expected_str = "2:5,0:1\n4:5,0:3"
-        expected_svg = "<?xml version='1.0' encoding='utf-8'?><!DOCTYPE svg><svg width='105px' height='140px' xmlns='http://www.w3.org/2000/svg'><rect width='100%%' height='100%%' fill='white' /><circle cx='35' cy='60' r='3' style='stroke:black;stroke-width:1;' /><line x1='35' y1='60' x2='35' y2='120' style='stroke:black;stroke-width:1;' /><circle cx='35' cy='120' r='3' style='stroke:black;stroke-width:1;' /><circle cx='35' cy='20' r='3' style='stroke:black;stroke-width:1;' /><line x1='35' y1='20' x2='35' y2='40' style='stroke:black;stroke-width:1;' /><circle cx='35' cy='40' r='3' style='stroke:black;stroke-width:1;' /><circle cx='70' cy='100' r='3' style='stroke:black;stroke-width:1;' /><line x1='70' y1='100' x2='70' y2='120' style='stroke:black;stroke-width:1;' /><circle cx='70' cy='120' r='3' style='stroke:black;stroke-width:1;' /><circle cx='70' cy='20' r='3' style='stroke:black;stroke-width:1;' /><line x1='70' y1='20' x2='70' y2='80' style='stroke:black;stroke-width:1;' /><circle cx='70' cy='80' r='3' style='stroke:black;stroke-width:1;' /><line x1='0' y1='20' x2='105' y2='20' style='stroke:black;stroke-width:1;' /><line x1='0' y1='40' x2='105' y2='40' style='stroke:black;stroke-width:1;' /><line x1='0' y1='60' x2='105' y2='60' style='stroke:black;stroke-width:1;' /><line x1='0' y1='80' x2='105' y2='80' style='stroke:black;stroke-width:1;' /><line x1='0' y1='100' x2='105' y2='100' style='stroke:black;stroke-width:1;' /><line x1='0' y1='120' x2='105' y2='120' style='stroke:black;stroke-width:1;' /></svg>"
+        expected_str = "2:5,0:1\n0:3,4:5"
+        expected_svg = "<?xml version='1.0' encoding='utf-8'?><!DOCTYPE svg><svg width='105px' height='140px' xmlns='http://www.w3.org/2000/svg'><rect width='100%%' height='100%%' fill='white' /><circle cx='35' cy='60' r='3' style='stroke:black;stroke-width:1;' /><line x1='35' y1='60' x2='35' y2='120' style='stroke:black;stroke-width:1;' /><circle cx='35' cy='120' r='3' style='stroke:black;stroke-width:1;' /><circle cx='35' cy='20' r='3' style='stroke:black;stroke-width:1;' /><line x1='35' y1='20' x2='35' y2='40' style='stroke:black;stroke-width:1;' /><circle cx='35' cy='40' r='3' style='stroke:black;stroke-width:1;' /><circle cx='70' cy='20' r='3' style='stroke:black;stroke-width:1;' /><line x1='70' y1='20' x2='70' y2='80' style='stroke:black;stroke-width:1;' /><circle cx='70' cy='80' r='3' style='stroke:black;stroke-width:1;' /><circle cx='70' cy='100' r='3' style='stroke:black;stroke-width:1;' /><line x1='70' y1='100' x2='70' y2='120' style='stroke:black;stroke-width:1;' /><circle cx='70' cy='120' r='3' style='stroke:black;stroke-width:1;' /><line x1='0' y1='20' x2='105' y2='20' style='stroke:black;stroke-width:1;' /><line x1='0' y1='40' x2='105' y2='40' style='stroke:black;stroke-width:1;' /><line x1='0' y1='60' x2='105' y2='60' style='stroke:black;stroke-width:1;' /><line x1='0' y1='80' x2='105' y2='80' style='stroke:black;stroke-width:1;' /><line x1='0' y1='100' x2='105' y2='100' style='stroke:black;stroke-width:1;' /><line x1='0' y1='120' x2='105' y2='120' style='stroke:black;stroke-width:1;' /></svg>"
 
-        cn = read_comparison_network_from_string("2:5,0:1,4:5,0:3")
+        cn = ComparisonNetwork.from_string("2:5,0:1,4:5,0:3")
         self.assertEqual(cn.__str__(), expected_str)
+        self.assertEqual(cn.__repr__(), expected_str)
         self.assertEqual(cn.svg(), expected_svg)
 
-        cn = read_comparison_network_from_string("2:5,4:5,0:1,0:3")
+        cn = ComparisonNetwork.from_string("2:5,4:5,0:1,0:3")
         self.assertEqual(cn.__str__(), expected_str)
+        self.assertEqual(cn.__repr__(), expected_str)
         self.assertEqual(cn.svg(), expected_svg)
 
     def test_is_sorting_network_should_identify_sorting_network(self):
         file_test_cases = [
+            "../examples/3-input.cn",
             "../examples/4-input.cn",
             "../examples/5-input.cn",
+            "../examples/6-input.cn",
+            "../examples/7-input.cn",
+            "../examples/8-input.cn",
             "../examples/8-input-bitonic.cn",
+            "../examples/9-input.cn",
+            "../examples/10-input.cn",
+            "../examples/11-input.cn",
+            "../examples/12-input.cn",
             "../examples/16-input.cn",
         ]
         for input_filename in file_test_cases:
             with self.subTest(inputFilename=input_filename):
-                cn = read_comparison_network(input_filename)
-                self.assertTrue(cn.is_sorting_network(False))
+                cn = ComparisonNetwork.from_file(input_filename)
+                self.assertTrue(cn.is_sorting_network())
 
         test_cases = [
             "0:1",
@@ -74,21 +177,29 @@ class Testing(unittest.TestCase):
         ]
         for s in test_cases:
             with self.subTest(s=s):
-                cn = read_comparison_network_from_string(s)
-                self.assertTrue(cn.is_sorting_network(False))
+                cn = ComparisonNetwork.from_string(s)
+                self.assertTrue(cn.is_sorting_network())
 
     def test_is_sorting_network_should_identify_non_sorting_network(self):
         file_test_cases = [
+            "../examples/3-input.cn",
             "../examples/4-input.cn",
             "../examples/5-input.cn",
+            "../examples/6-input.cn",
+            "../examples/7-input.cn",
+            "../examples/8-input.cn",
             "../examples/8-input-bitonic.cn",
+            "../examples/9-input.cn",
+            "../examples/10-input.cn",
+            "../examples/11-input.cn",
+            "../examples/12-input.cn",
             "../examples/16-input.cn",
         ]
         for input_filename in file_test_cases:
             with self.subTest(inputFilename=input_filename):
-                cn = read_comparison_network(input_filename)
-                cn.remove(cn[0])
-                self.assertFalse(cn.is_sorting_network(False))
+                cn = ComparisonNetwork.from_file(input_filename)
+                cn.remove(cn[0])  # Remove a comparator, to make it not a sorting network
+                self.assertFalse(cn.is_sorting_network())
 
         test_cases = [
             "0:1,1:2",
@@ -99,5 +210,83 @@ class Testing(unittest.TestCase):
         ]
         for s in test_cases:
             with self.subTest(s=s):
-                cn = read_comparison_network_from_string(s)
-                self.assertFalse(cn.is_sorting_network(False))
+                cn = ComparisonNetwork.from_string(s)
+                self.assertFalse(cn.is_sorting_network())
+
+    def test__optimize_comparator_depth_group(self):
+        test_cases = [
+            [Comparator(0, 2), Comparator(1, 5), Comparator(3, 4)],
+            [Comparator(1, 5), Comparator(0, 2), Comparator(3, 4)],
+            [Comparator(0, 2), Comparator(3, 4), Comparator(1, 5)],
+            [Comparator(1, 5), Comparator(3, 4), Comparator(0, 2)],
+            [Comparator(3, 4), Comparator(0, 2), Comparator(1, 5)],
+            [Comparator(3, 4), Comparator(1, 5), Comparator(0, 2)],
+        ]
+        expected = [Comparator(0, 2), Comparator(3, 4), Comparator(1, 5)]
+        cn = ComparisonNetwork()
+        for comparators in test_cases:
+            with self.subTest(comparators=comparators):
+                actual = cn._optimize_comparator_depth_group(comparators)
+                self.assertEqual(actual, expected)
+
+    def test__get_optimized_comparators(self):
+        test_cases = [
+            "0:2,1:5,3:4",
+            "1:5,0:2,3:4",
+            "0:2,3:4,1:5",
+            "1:5,3:4,0:2",
+            "3:4,0:2,1:5",
+            "3:4,1:5,0:2",
+        ]
+        expected = [Comparator(0, 2), Comparator(3, 4), Comparator(1, 5)]
+        for s in test_cases:
+            with self.subTest(s=s):
+                cn = ComparisonNetwork.from_string(s)
+                original = cn.comparators.copy()
+                actual = cn._get_optimized_comparators()
+                self.assertEqual(actual, expected)
+                self.assertEqual(cn.comparators, original)
+
+    def test_sort_binary_sequence(self):
+        test_cases = [
+            ("0:1", 0b01, 0b10),
+            ("0:1", 0b10, 0b10),
+            ("0:1", 0b11, 0b11),
+            ("0:1,1:2,0:1", 0b001, 0b100),
+            ("0:1,1:2,0:1", 0b010, 0b100),
+            ("0:1,1:2,0:1", 0b100, 0b100),
+            ("0:1,1:2,0:1", 0b011, 0b110),
+            ("0:1,1:2,0:1", 0b101, 0b110),
+            ("0:1,1:2,0:1", 0b110, 0b110),
+            ("0:1,1:2,0:1", 0b111, 0b111),
+        ]
+        for s, sequence, expected in test_cases:
+            with self.subTest(sequence=bin(sequence), expected=bin(expected)):
+                cn = ComparisonNetwork.from_string(s)
+                actual = cn.sort_binary_sequence(sequence)
+                self.assertEqual(actual, expected)
+
+    def test_sort_sequence(self):
+        test_cases = [
+            ("0:1", [0, 1], [0, 1]),
+            ("0:1", [1, 0], [0, 1]),
+            ("0:1", [1, 1], [1, 1]),
+            ("0:1,1:2,0:1", [0, 0, 1], [0, 0, 1]),
+            ("0:1,1:2,0:1", [0, 1, 0], [0, 0, 1]),
+            ("0:1,1:2,0:1", [1, 0, 0], [0, 0, 1]),
+            ("0:1,1:2,0:1", [0, 1, 1], [0, 1, 1]),
+            ("0:1,1:2,0:1", [1, 0, 1], [0, 1, 1]),
+            ("0:1,1:2,0:1", [1, 1, 0], [0, 1, 1]),
+            ("0:1,1:2,0:1", [1, 1, 1], [1, 1, 1]),
+            ("0:1", [2, 3], [2, 3]),
+            ("0:1", [3, 2], [2, 3]),
+            ("0:1", [3, 3], [3, 3]),
+            ("0:1", ["a", "b"], ["a", "b"]),
+            ("0:1", ["b", "a"], ["a", "b"]),
+            ("0:1", ["b", "b"], ["b", "b"]),
+        ]
+        for s, sequence, expected in test_cases:
+            with self.subTest(sequence=sequence, expected=expected):
+                cn = ComparisonNetwork.from_string(s)
+                actual = cn.sort_sequence(sequence)
+                self.assertEqual(actual, expected)
