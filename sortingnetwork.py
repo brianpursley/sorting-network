@@ -340,11 +340,13 @@ class ComparisonNetwork:
         :return: SVG representation of the comparison network
         """
         scale = 1
-        x_scale = scale * 35
-        y_scale = scale * 20
-        input_line_width = 1
-        comparator_line_width = 1
-        comparator_radius = 3
+        reduce = 3
+        x_scale = scale * 105
+        x_scale_thin = scale * 35
+        y_scale = scale * 60
+        input_line_width = 3
+        comparator_line_width = 3
+        comparator_radius = 9
 
         comparators_svg = ""
         w = x_scale
@@ -365,35 +367,33 @@ class ComparisonNetwork:
             cx = w
             for other, other_pos in group.items():
                 if other_pos >= cx and c.overlaps(other):
-                    cx = other_pos + x_scale / 3
+                    cx = other_pos + x_scale_thin
 
             # Generate two circles and a line representing the comparator
             y1 = y_scale + c.i1 * y_scale
             y2 = y_scale + c.i2 * y_scale
+            r = comparator_radius
             comparators_svg += (
-                f"<circle cx='{cx}' cy='{y1}' r='{comparator_radius}' style='stroke:black;stroke-width:1;' />"
-                f"<line x1='{cx}' y1='{y1}' x2='{cx}' y2='{y2}' style='stroke:black;stroke-width:{comparator_line_width};' />"
-                f"<circle cx='{cx}' cy='{y2}' r='{comparator_radius}' style='stroke:black;stroke-width:1;' />"
+                f"M{cx-r} {y1}a{r} {r} 0 1 1 {r+r} 0a{r} {r} 0 1 1-{r+r} 0z"
+                f"m{r} 0V{y2}"
+                f"m-{r} 0a{r} {r} 0 1 1 {r+r} 0a{r} {r} 0 1 1-{r+r} 0z"
             )
             # Add this comparator to the current group
             group[c] = cx
 
-        # Generate line SVG elements
-        lines_svg = ""
+        # Generate line SVG path
+        n = self.get_max_input() + 2
         w += x_scale
-        n = self.get_max_input() + 1
-        for i in range(0, n):
-            y = y_scale + i * y_scale
-            lines_svg += f"<line x1='0' y1='{y}' x2='{w}' y2='{y}' style='stroke:black;stroke-width:{input_line_width};' />"
+        h = n * y_scale
+        lines_svg = "".join(f"M0 {i * y_scale}H{w}" for i in range(1, n))
 
-        h = (n + 1) * y_scale
         return (
             "<?xml version='1.0' encoding='utf-8'?>"
             "<!DOCTYPE svg>"
-            f"<svg width='{w}px' height='{h}px' xmlns='http://www.w3.org/2000/svg'>"
-            "<rect width='100%%' height='100%%' fill='white' />"
-            f"{comparators_svg}"
-            f"{lines_svg}"
+            f"<svg width='{w/reduce}' height='{h/reduce}' viewBox='0 0 {w} {h}' xmlns='http://www.w3.org/2000/svg'>"
+            f"<rect width='{w}' height='{h}' fill='#fff'/>"
+            f"<path style='stroke:#000;stroke-width:{comparator_line_width};fill:#000' d='{comparators_svg}'/>"
+            f"<path style='stroke:#000;stroke-width:{input_line_width}' d='{lines_svg}'/>"
             "</svg>"
         )
 
