@@ -181,6 +181,9 @@ class ComparisonNetworkTests(unittest.TestCase):
                 self.assertTrue(cn.is_sorting_network())
 
     def test_is_sorting_network_should_identify_non_sorting_network(self):
+        cn = ComparisonNetwork()
+        self.assertFalse(cn.is_sorting_network())
+
         file_test_cases = [
             "../examples/3-input.cn",
             "../examples/4-input.cn",
@@ -198,10 +201,21 @@ class ComparisonNetworkTests(unittest.TestCase):
         for input_filename in file_test_cases:
             with self.subTest(inputFilename=input_filename):
                 cn = ComparisonNetwork.from_file(input_filename)
-                cn.remove(cn[0])  # Remove a comparator, to make it not a sorting network
-                self.assertFalse(cn.is_sorting_network())
+                m = cn.get_max_input()
+                # First confirm this is a sorting network, then systematically remove each comparator
+                # and confirm it is no longer a sorting network.
+                self.assertTrue(cn.is_sorting_network())
+                for i in range(len(cn.comparators)):
+                    cn2 = ComparisonNetwork()
+                    cn2.comparators = [c for c in cn.comparators if c != cn.comparators[i]]
+                    if cn2.get_max_input() != m:
+                        # Removing this comparator would result in a network with fewer inputs, so skip this one
+                        continue
+                    self.assertFalse(cn2.is_sorting_network())
 
         test_cases = [
+            "0:2",
+            "1:2",
             "0:1,1:2",
             "0:1,1:3,0:1",
             "0:1,1:3,2:3",
