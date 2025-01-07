@@ -234,7 +234,7 @@ class ComparisonNetwork:
                     # |-------|---------------------|
                     #
                     # Truth table for minmax function considering '#'=Unknown
-                    # https://en.wikipedia.org/wiki/Three-valued-logic
+                    # https://en.wikipedia.org/wiki/Three-valued_logic
                     #
                     # | (A,B) | (min(A,B),max(A,B)) |
                     # |-------|---------------------|
