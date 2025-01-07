@@ -193,12 +193,12 @@ class ComparisonNetwork:
         # Trans.IPS.Japan, vol.38, no.3, p.381-389. http://id.nii.ac.jp/1001/00013442/
         # The zero-one principle shows that it is sufficient to verify 2^n types of inputs.
         # This algorithm classifies 2^n inputs and performs depth-first search
-        # by dividing into approximately 1.618^n branches.
+        # by dividing into O(1.618^n) branches.
         m, n = len(self.comparators), (self.get_max_input() + 1)
-        # Reduce class object property reads
+        # Reduce class object property reads for optimization performance
         cmps = list(map(lambda x: (x.i1, x.i2), self.comparators))
         # initial p state is all '#'=unknown: not determined to be 0 or 1
-        stack = [(0, [2]*n, 0, n - 1)]
+        stack = [(0, [2] * n, 0, n - 1)]
         # Progress is measured in 128 is 100%
         progress, prev_progress = 0, -1
         try:
@@ -219,40 +219,39 @@ class ComparisonNetwork:
                     # for reference due to the very high number of accesses
                     a, b = cmps[i]
                     i += 1
-                    """
-                    The table can be written this way, regarding
-                    the output of the comparison exchanger as equivalent to
-                    the output of the minmax function.
-
+                    # The table can be written this way, regarding
+                    # the output of the comparison exchanger as equivalent to
+                    # the output of the minmax function.
+                    #
                     # Truth table for the usual minmax function
-
-                    | (A,B) | (min(A,B),max(A,B)) |
-                    +-------+---------------------+
-                    | (0,0) |        (0,0)        |
-                    | (0,1) |        (0,1)        |
-                    | (1,0) |        (0,1)        |
-                    | (1,1) |        (1,1)        |
-                    +-------+---------------------+
-
-                    # Truth table for minmax function considering Unknown
-                    https://en.wikipedia.org/wiki/Three-valued_logic
-
-                    | (A,B) | (min(A,B),max(A,B)) |
-                    +-------+---------------------|
-                    | (#,#) |   (0,0) or (#,1)    | [branch] A=# and B=#
-                    [alternatively, branch (0,#) or (1,1)]
-                    +-------+---------------------+
-                    | (1,#) |    (#,1) = (B,A)    |
-                    | (1,0) |    (0,1) = (B,A)    | [swap] A!=0 and B!=1
-                    | (#,0) |    (0,#) = (B,A)    |   and (A!=# or B!=#)
-                    +-------+---------------------+
-                    | (0,#) |    (0,#) = (A,B)    |
-                    | (#,1) |    (#,1) = (A,B)    |
-                    | (0,0) |    (0,0) = (A,B)    | [noop] A=0 or B=1
-                    | (0,1) |    (0,1) = (A,B)    |
-                    | (1,1) |    (1,1) = (A,B)    |
-                    +-------+---------------------+
-                    """
+                    #
+                    # | (A,B) | (min(A,B),max(A,B)) |
+                    # |-------|---------------------|
+                    # | (0,0) |        (0,0)        |
+                    # | (0,1) |        (0,1)        |
+                    # | (1,0) |        (0,1)        |
+                    # | (1,1) |        (1,1)        |
+                    # |-------|---------------------|
+                    #
+                    # Truth table for minmax function considering '#'=Unknown
+                    # https://en.wikipedia.org/wiki/Three-valued-logic
+                    #
+                    # | (A,B) | (min(A,B),max(A,B)) |
+                    # |-------|---------------------|
+                    # | (#,#) |   (0,0) or (#,1)    | [branch] A=# and B=#
+                    # |-------|---------------------| {alternatively, branch (0,#) or (1,1)}
+                    # | (1,#) |    (#,1) = (B,A)    |
+                    # | (1,0) |    (0,1) = (B,A)    | [swap] A!=0 and B!=1
+                    # | (#,0) |    (0,#) = (B,A)    |   and (A!=# or B!=#)
+                    # |-------|---------------------|
+                    # | (0,#) |    (0,#) = (A,B)    |
+                    # | (#,1) |    (#,1) = (A,B)    |
+                    # | (0,0) |    (0,0) = (A,B)    | [noop] A=0 or B=1
+                    # | (0,1) |    (0,1) = (A,B)    |
+                    # | (1,1) |    (1,1) = (A,B)    |
+                    # |-------|---------------------|
+                    #
+                    # Check if p reaches '0...01...1' or '0...0#1...1' sorted in all branches.
                     if p[a] == 2 and p[b] == 2:
                         # (p[a],p[b]) are (#,#), then we have the choice:
                         # (p[a],p[b]) become (0,0) or (#,1).
@@ -260,53 +259,51 @@ class ComparisonNetwork:
                         # (p[a],p[b]) become (0,#) or (1,1).
                         # The branches are only in this part.
                         # Let n be the number of unknowns,
-                        # the maximum number of branches F(n) is:
-                        # F(n) = F(n-1) + F(n-2).
+                        # the maximum number of branches T(n) is:
+                        # T(n) = T(n-1) + T(n-2),  T(1) = 1, T(2) = 2.
                         # This is a Fibonacci sequence.
                         # Fibonacci sequence asymptotically approaches
                         # the power of the golden ratio.
-                        q = p.copy()
+                        q = p.copy()  # copy state for branch
+                        # branch (#,#) -> (0,0), current (#,#) -> (#,1)
                         q[a], q[b], p[b] = 0, 0, 1
-                        # check leading non-zero position
+                        # check 'q' leading non-zero position
                         for j in range(z, o):
                             if q[j] != 0:
-                                # if not sorted
+                                # if 'q' is not sorted yet
                                 progress -= 128 >> i
                                 stack.append((i, q, j, o))
                                 break  # continue 'b
-                        # check trailing non-one position
+                        # check p trailing non-one position
                         for j in range(o, z, -1):
                             if p[j] != 1:
-                                # if not sorted
+                                # if p is not sorted yet
                                 o = j
                                 break  # continue 'b
                         else:
-                            # if this branch is sorted:
-                            # p is '0...01...1' or '0...0#1...1'
+                            # if p is sorted in this branch:
                             break  # continue 'a
                     elif p[a] != 0 and p[b] != 1:
                         # If (p[a],p[b]) are in [(#,0),(1,0),(1,#)],
-                        # then swap p[a] and p[b]
+                        # then swap (p[a],p[b]) to (p[b],p[a]).
                         p[a], p[b] = p[b], p[a]
-                        # check leading non-zero position
+                        # check p leading non-zero position
                         for j in range(z, o):
                             if p[j] != 0:
-                                # if not sorted
+                                # if p is not sorted yet
                                 z = j
                                 break  # continue 'b
                         else:
-                            # if this branch is sorted:
-                            # p is '0...01...1' or '0...0#1...1'
+                            # if p is sorted in this branch:
                             break  # continue 'a
-                        # check trailing non-one position
+                        # check p trailing non-one position
                         for j in range(o, z, -1):
                             if p[j] != 1:
-                                # if not sorted
+                                # if p is not sorted yet
                                 o = j
                                 break  # continue 'b
                         else:
-                            # if this branch is sorted:
-                            # p is '0...01...1' or '0...0#1...1'
+                            # if p is sorted in this branch:
                             break  # continue 'a
                 else:
                     # If there is any branch where the sequence
