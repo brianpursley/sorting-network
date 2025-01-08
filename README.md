@@ -193,4 +193,4 @@ See the [examples](examples) directory for more examples.
 ## Contributors
 
 * [brianpursley](https://github.com/brianpursley) - Original author / maintainer
-* [mizar](https://github.com/mizar) - Various improvements, including and an optimized `is_sorting_network()` function using a [three-valued-logic DFS approach](https://github.com/brianpursley/sorting-network/pull/9).
+* [mizar](https://github.com/mizar) - Various improvements, including an optimized `is_sorting_network()` function using a [three-valued-logic DFS approach](https://github.com/brianpursley/sorting-network/pull/9).
