@@ -50,6 +50,8 @@ options:
 
 You can use the `--show-progress` option to see the percent complete while it is checking.
 
+For better performance while checking large sorting networks, the use of [pypy](https://github.com/pypy/pypy?tab=readme-ov-file) is recommended.
+
 ### Example: Check a comparison network from a file
 ```shell
 ./sortingnetwork.py --input example.cn check
@@ -189,6 +191,8 @@ options:
 ![16-Input Sorting Network](examples/16-input.png)
 
 See the [examples](examples) directory for more examples.
+
+The examples provided are not necessarily the most efficient sorting networks for the given number of inputs. They are provided for illustrative purposes and testing.
 
 ## Contributors
 
