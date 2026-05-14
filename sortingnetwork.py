@@ -319,6 +319,37 @@ class ComparisonNetwork:
             if show_progress:
                 print("\r", end="")
 
+    def is_sorting_network_exhaustive(self, show_progress: bool = False) -> bool:
+        """
+        Determine if this comparison network is a sorting network (exhaustive approach).
+        This is effectively the same as is_sorting_network(), but checks every sequence digit.
+        It is provided here for educational purposes, since it is more straightforward.
+        :param show_progress: Whether to show progress while checking
+        :return: True if this comparison network is a sorting network, False otherwise
+        """
+        if len(self.comparators) == 0:
+            return False
+        # Use the zero-one principle to determine if this comparison network is a sorting network
+        number_of_inputs = self.get_max_input() + 1
+        max_sequence_to_check = (1 << number_of_inputs) - 1
+        try:
+            for i in range(0, max_sequence_to_check):
+                ones_count = i.bit_count()
+                if ones_count > 0:
+                    zeros_count = number_of_inputs - ones_count
+                    expected_sorted_sequence = ((1 << ones_count) - 1) << zeros_count
+                else:
+                    expected_sorted_sequence = 0
+                if self.sort_binary_sequence(i) != expected_sorted_sequence:
+                    return False
+                if show_progress and i % 100 == 0:
+                    percent_complete = round(i * 100 / max_sequence_to_check)
+                    print(f"\rChecking... {percent_complete}%", end="")
+            return True
+        finally:
+            if show_progress:
+                print("\r", end="")
+
     def sort_binary_sequence(self, sequence: int) -> int:
         """
         Sort a binary sequence using this comparison network.
@@ -517,6 +548,7 @@ def main() -> int:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     check_parser = subparsers.add_parser("check", description="check whether it is a sorting network", help="check whether it is a sorting network")
+    check_parser.add_argument("--exhaustive", action="store_true", help="use the exhaustive approach to check whether it is a sorting network", default=False)
     check_parser.add_argument("--show-progress", action="store_true", help="show percent complete while checking")
 
     print_parser = subparsers.add_parser("print", description="print the comparison network definition", help="print the comparison network definition")
@@ -533,12 +565,20 @@ def main() -> int:
     cn = ComparisonNetwork.from_file(args.input)
 
     if args.command == "check":
-        if cn.is_sorting_network(show_progress=args.show_progress):
-            print("It is a sorting network!")
-            return 0
+        if args.exhaustive:
+            if cn.is_sorting_network_exhaustive(show_progress=args.show_progress):
+                print("It is a sorting network!")
+                return 0
+            else:
+                print("It is not a sorting network.")
+                return 1
         else:
-            print("It is not a sorting network.")
-            return 1
+            if cn.is_sorting_network(show_progress=args.show_progress):
+                print("It is a sorting network!")
+                return 0
+            else:
+                print("It is not a sorting network.")
+                return 1
 
     if args.command == "print":
         if args.print_filename == "":

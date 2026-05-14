@@ -182,6 +182,35 @@ class ComparisonNetworkTests(unittest.TestCase):
                 cn = ComparisonNetwork.from_string(s)
                 self.assertTrue(cn.is_sorting_network())
 
+    def test_is_sorting_network_exhaustive_should_identify_sorting_network(self):
+        file_test_cases = [
+            "../examples/3-input.cn",
+            "../examples/4-input.cn",
+            "../examples/5-input.cn",
+            "../examples/6-input.cn",
+            "../examples/7-input.cn",
+            "../examples/8-input.cn",
+            "../examples/8-input-bitonic.cn",
+            "../examples/9-input.cn",
+            "../examples/10-input.cn",
+            "../examples/11-input.cn",
+            "../examples/12-input.cn",
+            "../examples/16-input.cn",
+        ]
+        for input_filename in file_test_cases:
+            with self.subTest(inputFilename=input_filename):
+                self._test_is_sorting_network_exhaustive_from_file(input_filename)
+
+        test_cases = [
+            "0:1",
+            "0:1,1:2,0:1",
+            "0:2,1:3,0:1,2:3,1:2",
+        ]
+        for s in test_cases:
+            with self.subTest(s=s):
+                cn = ComparisonNetwork.from_string(s)
+                self.assertTrue(cn.is_sorting_network_exhaustive())
+
     @unittest.skipUnless(platform.python_implementation() == "PyPy", "slow tests only run when using pypy")
     def test_is_sorting_network_should_identify_large_sorting_network(self):
         file_test_cases = [
@@ -195,6 +224,10 @@ class ComparisonNetworkTests(unittest.TestCase):
     def _test_is_sorting_network_from_file(self, input_filename):
         cn = ComparisonNetwork.from_file(input_filename)
         self.assertTrue(cn.is_sorting_network())
+
+    def _test_is_sorting_network_exhaustive_from_file(self, input_filename):
+        cn = ComparisonNetwork.from_file(input_filename)
+        self.assertTrue(cn.is_sorting_network_exhaustive())
 
     def test_is_sorting_network_should_identify_non_sorting_network(self):
         cn = ComparisonNetwork()
@@ -234,6 +267,42 @@ class ComparisonNetworkTests(unittest.TestCase):
                 cn = ComparisonNetwork.from_string(s)
                 self.assertFalse(cn.is_sorting_network())
 
+    def test_is_sorting_network_exhaustive_should_identify_non_sorting_network(self):
+        cn = ComparisonNetwork()
+        self.assertFalse(cn.is_sorting_network_exhaustive())
+
+        file_test_cases = [
+            "../examples/3-input.cn",
+            "../examples/4-input.cn",
+            "../examples/5-input.cn",
+            "../examples/6-input.cn",
+            "../examples/7-input.cn",
+            "../examples/8-input.cn",
+            "../examples/8-input-bitonic.cn",
+            "../examples/9-input.cn",
+            "../examples/10-input.cn",
+            "../examples/11-input.cn",
+            "../examples/12-input.cn",
+            "../examples/16-input.cn",
+        ]
+        for input_filename in file_test_cases:
+            with self.subTest(inputFilename=input_filename):
+                self._test_is_non_sorting_network_exhaustive_from_file(input_filename)
+
+        test_cases = [
+            "0:2",
+            "1:2",
+            "0:1,1:2",
+            "0:1,1:3,0:1",
+            "0:1,1:3,2:3",
+            "0:1,1:3,2:3,0:3",
+            "0:2,1:3,0:1,2:3",
+        ]
+        for s in test_cases:
+            with self.subTest(s=s):
+                cn = ComparisonNetwork.from_string(s)
+                self.assertFalse(cn.is_sorting_network_exhaustive())
+
     @unittest.skipUnless(platform.python_implementation() == "PyPy", "slow tests only run when using pypy")
     def test_is_sorting_network_should_identify_large_non_sorting_network(self):
         file_test_cases = [
@@ -258,6 +327,22 @@ class ComparisonNetworkTests(unittest.TestCase):
                 # Removing this comparator resulted in a network with fewer inputs, so skip this one
                 continue
             if cn2.is_sorting_network():
+                self.fail(f"Unexpected sorting network after removing comparator {removed_comparator} from position {i}")
+
+    def _test_is_non_sorting_network_exhaustive_from_file(self, input_filename):
+        cn = ComparisonNetwork.from_file(input_filename)
+        m = cn.get_max_input()
+        # First confirm this is a sorting network, then systematically remove each comparator
+        # and confirm it is no longer a sorting network.
+        self.assertTrue(cn.is_sorting_network_exhaustive())
+        for i in range(len(cn.comparators)):
+            cn2 = ComparisonNetwork()
+            cn2.comparators = cn.comparators.copy()
+            removed_comparator = cn2.comparators.pop(i)
+            if cn2.get_max_input() != m:
+                # Removing this comparator resulted in a network with fewer inputs, so skip this one
+                continue
+            if cn2.is_sorting_network_exhaustive():
                 self.fail(f"Unexpected sorting network after removing comparator {removed_comparator} from position {i}")
 
     def test__optimize_comparator_depth_group(self):
