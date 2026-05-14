@@ -36,12 +36,13 @@ Multiple lines can be used as well, to logically group the comparators at each d
 
 ## Check Command
 ```text
-usage: sortingnetwork.py check [-h] [--show-progress]
+usage: sortingnetwork.py check [-h] [--exhaustive] [--show-progress]
 
 check whether it is a sorting network
 
 options:
   -h, --help       show this help message and exit
+  --exhaustive     use the exhaustive approach to check whether it is a sorting network
   --show-progress  show percent complete while checking
 ```
 
@@ -49,6 +50,8 @@ options:
 * If it is not a sorting network, the output will be `It is not a sorting network.` and the exit code will be 1.
 
 You can use the `--show-progress` option to see the percent complete while it is checking.
+
+You can use the `--exhaustive` option to use the exhaustive approach to check whether it is a sorting network, which is much slower when there are a large number of inputs.
 
 For better performance while checking large sorting networks, the use of [pypy](https://github.com/pypy/pypy?tab=readme-ov-file) is recommended.
 
