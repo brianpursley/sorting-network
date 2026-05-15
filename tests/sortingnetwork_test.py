@@ -112,7 +112,7 @@ class ComparisonNetworkTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             ComparisonNetwork().svg()
 
-    def test_example_svg(self):
+    def test_example_svg_optimized(self):
         self.maxDiff = None
         test_cases = [
             ("../examples/3-input.cn", "../examples/3-input.svg"),
@@ -133,7 +133,7 @@ class ComparisonNetworkTests(unittest.TestCase):
                 cn = ComparisonNetwork.from_file(input_filename)
                 with open(svg_filename, "r") as f:
                     expected_svg = f.read().strip()
-                self.assertEqual(cn.svg(), expected_svg)
+                self.assertEqual(cn.svg(True), expected_svg)
 
     # https://github.com/brianpursley/sorting-network/issues/2
     def test_optimize_should_order_comparators_to_avoid_unnecessary_gaps(self):
@@ -144,12 +144,12 @@ class ComparisonNetworkTests(unittest.TestCase):
         cn = ComparisonNetwork.from_string("2:5,0:1,4:5,0:3")
         self.assertEqual(cn.__str__(), expected_str)
         self.assertEqual(cn.__repr__(), expected_str)
-        self.assertEqual(cn.svg(), expected_svg)
+        self.assertEqual(cn.svg(True), expected_svg)
 
         cn = ComparisonNetwork.from_string("2:5,4:5,0:1,0:3")
         self.assertEqual(cn.__str__(), expected_str)
         self.assertEqual(cn.__repr__(), expected_str)
-        self.assertEqual(cn.svg(), expected_svg)
+        self.assertEqual(cn.svg(True), expected_svg)
 
     def test_is_sorting_network_should_identify_sorting_network(self):
         file_test_cases = [

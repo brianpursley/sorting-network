@@ -113,7 +113,7 @@ options:
 
 ## SVG Command
 ```text
-usage: sortingnetwork.py svg [-h] [filename]
+usage: sortingnetwork.py svg [-h] [--optimize] [filename]
 
 generate an SVG
 
@@ -122,9 +122,11 @@ positional arguments:
 
 options:
   -h, --help  show this help message and exit
+  --optimize  perform layout optimization before generating the SVG
 ```
 
 * If a filename is not specified, the SVG will be output to stdout.
+* The `--optimize` option will perform layout optimization before generating the SVG. Otherwise, the comparators are rendered in the order they appear in the comparator list.
 
 ### Example: Generate an SVG to a file
 ```shell

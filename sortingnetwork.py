@@ -478,7 +478,7 @@ class ComparisonNetwork:
 
         return result
 
-    def svg(self) -> str:
+    def svg(self, optimize: bool = False) -> str:
         """
         Generate an SVG representation of the comparison network.
         :return: SVG representation of the comparison network
@@ -495,7 +495,7 @@ class ComparisonNetwork:
         comparators_svg = ""
         w = x_scale
         group = {}
-        for c in self._get_optimized_comparators():
+        for c in self._get_optimized_comparators() if optimize else self.comparators:
 
             # If the comparator inputs are the same position as any other comparator in the group, then start a new group
             for other in group:
@@ -541,7 +541,6 @@ class ComparisonNetwork:
             "</svg>"
         )
 
-
 def main() -> int:
     parser = argparse.ArgumentParser(description="a tool for working with sorting networks")
     parser.add_argument("--input", "-i", metavar="inputfile", help="file containing comparison network definition, or use stdin if not specified", nargs='?', default='')
@@ -559,6 +558,7 @@ def main() -> int:
 
     svg_parser = subparsers.add_parser("svg", description="generate an SVG", help="generate an SVG")
     svg_parser.add_argument("svg_filename", metavar="filename", help="the file to save the SVG to", nargs='?', default='')
+    svg_parser.add_argument("--optimize", action="store_true", help="perform layout optimization before generating the SVG")
 
     args = parser.parse_args()
 
@@ -596,10 +596,10 @@ def main() -> int:
 
     if args.command == "svg":
         if args.svg_filename == "":
-            print(cn.svg())
+            print(cn.svg(args.optimize))
         else:
             with open(args.svg_filename, "w") as f:
-                f.write(cn.svg())
+                f.write(cn.svg(args.optimize))
         return 0
 
     return 2

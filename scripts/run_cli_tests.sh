@@ -131,6 +131,17 @@ else
 fi
 rm "$TEMP_FILE"
 
+echo -n "svg: optimized ... "
+ACTUAL=$(../sortingnetwork.py -i ../examples/5-input.cn svg --optimize)
+ACTUAL_EXIT_CODE=$?
+EXPECTED=$(cat ../examples/5-input.svg)
+EXPECTED_EXIT_CODE=0
+if [ "$ACTUAL" != "$EXPECTED" ] || [ $ACTUAL_EXIT_CODE -ne $EXPECTED_EXIT_CODE ]; then
+  test_failed
+else
+  test_passed
+fi
+
 if [ $FAILED_TEST_COUNT -gt 0 ]; then
   printf "\n\033[31m%s test(s) failed.\033[0m\n" "$FAILED_TEST_COUNT"
   exit 1
