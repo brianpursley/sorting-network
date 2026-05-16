@@ -17,3 +17,8 @@ scripts/run_unit_tests.sh
 ```shell
 scripts/run_cli_tests.sh
 ```
+
+## Running benchmarks
+```shell
+scripts/run_benchmarks.sh
+```
